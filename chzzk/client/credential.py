@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+import httpx
+
 
 @dataclass
 class Credential:
@@ -10,8 +12,8 @@ class Credential:
     auth: str
     session: str
 
-    def as_cookie(self) -> dict[str, str]:
-        return {
-            "NID_AUT": self.auth,
-            "NID_SES": self.session
-        }
+    def as_cookie(self) -> httpx.Cookies:
+        cookies = httpx.Cookies()
+        cookies.set(name="NID_AUT", value=self.auth, domain=".naver.com", path="/")
+        cookies.set(name="NID_SES", value=self.session, domain=".naver.com", path="/")
+        return cookies

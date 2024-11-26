@@ -10,7 +10,7 @@ _log = logging.getLogger(__name__)
 
 class EventManager:
     def __init__(self, loop: Optional[asyncio.AbstractEventLoop] = None):
-        self.loop = loop or asyncio.get_event_loop()
+        self.loop: Optional[asyncio.AbstractEventLoop] = loop
         self._listeners: dict[str, list[tuple[asyncio.Future, Callable[..., bool]]]] = dict()
         self._extra_event: dict[str, list[Callable[..., Coroutine[Any, Any, Any]]]] = dict()
 
@@ -61,6 +61,18 @@ class EventManager:
         return asyncio.wait_for(future, timeout=timeout)
 
     def event(self, coro: Callable[..., Coroutine[Any, Any, Any]]) -> Callable[..., Coroutine[Any, Any, Any]]:
+        """
+        `event` is a Python decorator. You can specify the name of the event you want to subscribe to
+        (e.g., on_{event_name}) in the function, and then wrap the function with the corresponding decorator.
+
+        @client.event
+        async def on_{event_type}(...):
+            # trigger event
+            ...
+
+        Please refer to the ChatCmd in model.chatmeta.py for the event list.
+
+        """
         if not asyncio.iscoroutinefunction(coro):
             raise TypeError("function must be a coroutine.")
 
@@ -107,9 +119,7 @@ class EventManager:
             return
 
         for coroutine_function in self._extra_event[method]:
-            _log.info(f"coroutine_function: {coroutine_function}")
             task = self._schedule_event(coroutine_function, method, *args, **kwargs)
-            _log.info(f"task: {task}")
             task.add_done_callback(self._handle_task_result)
 
     async def _run_event(
@@ -120,7 +130,6 @@ class EventManager:
             **kwargs: Any,
     ) -> None:
         try:
-            _log.info(f"run_event: {event_name}")
             await coro(*args, **kwargs)
         except asyncio.CancelledError:
             pass
@@ -141,7 +150,8 @@ class EventManager:
         # Schedules the task
         return self.loop.create_task(wrapped, name=f"chzzk: {event_name}")
 
-    def _handle_task_result(self, task: asyncio.Task) -> None:
+    @staticmethod
+    def _handle_task_result(task: asyncio.Task) -> None:
         try:
             task.result()  # Task의 결과를 확인
         except Exception as e:

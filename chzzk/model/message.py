@@ -101,6 +101,11 @@ class RecentChat(DefaultModel):
     notice: Optional[NoticeMessage] = None
 
 
+class PermissionMiss(DefaultModel):
+    ret_code: Optional[int]
+    ret_msg: Optional[str]
+
+
 class ChatMessage(MessageDetail[Extra]):
     pass
 

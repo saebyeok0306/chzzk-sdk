@@ -3,7 +3,7 @@ import inspect
 from typing import Callable, Any
 
 from chzzk.model import ChatCmd, get_enum, ChatType, DonationMessage, SystemMessage, ChatMessage, SubscriptionMessage, \
-    RecentChat, NoticeMessage, Blind, MissionDonation
+    RecentChat, NoticeMessage, Blind, MissionDonation, PermissionMiss
 
 
 class EventParser:
@@ -49,6 +49,12 @@ class EventParser:
     def call_connect(self, _: dict[str, Any]):
         self.call_handler(ChatCmd.CONNECTED)
         self.dispatch("connect")
+
+    @register(ChatCmd.PERMISSION)
+    @catch_exception
+    def call_permission_miss(self, data: dict[str, Any]):
+        validated_data = PermissionMiss(**data)
+        self.dispatch("permission_miss", validated_data)
 
     def _parse_chat(self, data: list[dict[str, Any]]):
         if data is None or len(data) == 0:

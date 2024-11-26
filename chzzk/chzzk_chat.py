@@ -22,6 +22,8 @@ class ChzzkChat(EventManager):
         self._context: Optional[ChatContext] = ChatContext()
         self.is_closed = False
         self.is_reconnected = True
+        
+        # live state
         self._live_state: Optional[Literal["OPEN", "CLOSE"]] = None
 
     async def __aenter__(self) -> Self:
@@ -41,6 +43,10 @@ class ChzzkChat(EventManager):
 
     async def run(self, channel_id: str, reconnect: bool = True):
         assert self._chat_client is None, "Already connected."
+
+        if self.loop is None:
+            self.loop = asyncio.get_event_loop()
+
         self._context.channel_id = channel_id
         self.is_reconnected = reconnect
 
@@ -57,10 +63,12 @@ class ChzzkChat(EventManager):
 
             token = await self._chzzk._game_chat.access_token(self._context.chat_channel_id)
             self._context.access_token = token.access_token
+            self._context.extra_token = token.extra_token
 
         await self.polling()
 
     async def _check_live(self):
+        _log.info(msg=f"check live status...")
         live_status = await self._chzzk.live.status(channel_id=self._context.channel_id)
         if live_status is None:
             return
@@ -75,7 +83,7 @@ class ChzzkChat(EventManager):
         if live_status.chat_channel_id == self._context.chat_channel_id:
             return
 
-        print("A chat_channel_id has been updated. Reconnect websocket.")
+        _log.info("A chat_channel_id has been updated. Reconnect websocket.")
         await self._chat_client.close()
 
         self._context.chat_channel_id = live_status.chat_channel_id
@@ -91,13 +99,10 @@ class ChzzkChat(EventManager):
 
                 while True:
                     await self._chat_client.poll_event()
-                    await asyncio.sleep(0)
-                    _log.info(msg=".")
                     relative_time = datetime.now() - last_check_time
                     if relative_time.total_seconds() >= 59:
                         last_check_time = datetime.now()
-                        _log.info(msg=f"check live status...")
-                        await self._chzzk.live.status(self._context.channel_id)
+                        await self._check_live()
 
             except ReconnectWebsocket:
                 self.dispatch("disconnect")
@@ -105,3 +110,12 @@ class ChzzkChat(EventManager):
                     break
                 continue
 
+    async def send_chat(self, message: str):
+        await self._chat_client.send_chat(message=message, chat_channel_id=self._context.chat_channel_id)
+
+    async def request_recent_chat(self, count: int = 50):
+        await self._chat_client.request_recent_chat(count=count, chat_channel_id=self._context.chat_channel_id)
+
+    @property
+    def is_broadcast_on(self):
+        return self._live_state == "OPEN"

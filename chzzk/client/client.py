@@ -6,7 +6,7 @@ import httpx
 from chzzk.client.credential import Credential
 from chzzk.exception import ChzzkHTTPError
 
-_http_method = Literal["GET", "POST"]
+_http_method = Literal["GET", "POST", "DELETE"]
 _user_agent: Final[str] = (
     "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36"
     "(KHTML, like Gecko) Chrome/37.0.2049.0 Safari/537.36"
@@ -29,7 +29,9 @@ class Client:
             self._client.cookies.update(self._credential.as_cookie())
 
     def has_credentials(self):
-        return self._credential is not None
+        if self._credential is not None and self._credential.auth and self._credential.session:
+            return True
+        return False
 
     async def request(
             self,

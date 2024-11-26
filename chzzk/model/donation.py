@@ -35,11 +35,13 @@ class VideoDonation(DonationBase):
 
 
 class MissionDonation(DonationBase):
-    donation_type: Literal["MISSION"]
+    donation_type: Literal["MISSION", "MISSION_PARTICIPATION"]
     duration_time: int = 0
     mission_donation_id: Optional[str] = None
     mission_donation_type: Optional[str] = None  # ALONE ?
+    related_mission_donation_id: Optional[str] = None
 
+    total_pay_amount: Optional[int] = 0
     mission_created_time: Optional[Annotated[datetime, AfterValidator(to_kst)]]
     mission_start_time: Optional[Annotated[datetime, AfterValidator(to_kst)]] = None
     mission_end_time: Optional[Annotated[datetime, AfterValidator(to_kst)]] = None

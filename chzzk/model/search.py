@@ -24,6 +24,15 @@ class SearchCursor(DefaultModel, Generic[T]):
     page: Optional[Page] = None
     data: List[T]
 
+    def __getitem__(self, item):
+        return self.data[item]
+
+    def __delitem__(self, key):
+        del self.data[key]
+
+    def __iter__(self):
+        return iter(self.data)
+
 
 class SearchRecord(DefaultModel):
     pass

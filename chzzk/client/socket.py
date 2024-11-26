@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import time
 from typing import Optional, Any, Callable
 
@@ -9,6 +10,9 @@ from websockets.asyncio.client import ClientConnection
 
 from chzzk.exception import ChzzkError, ReconnectWebsocket, ConnectionClosed, WebSocketClosure
 from chzzk.model import ChatContext, ChatCmd, DefaultMessage, get_enum, ChatType
+
+
+_log = logging.getLogger()
 
 
 class ChatClient:
@@ -58,7 +62,8 @@ class ChatClient:
             msg = await asyncio.wait_for(self._ws.recv(decode=True), timeout=59)
             await self.received_message(json.loads(msg))
         except asyncio.TimeoutError:
-            await self.send_ping()
+            # await self.send_ping()
+            pass
         except (WebSocketClosure, ConnectionClosedError, ConnectionClosedOK) as e:
             if self._can_handle_close(e.code):
                 raise ReconnectWebsocket()
@@ -77,6 +82,14 @@ class ChatClient:
             case ChatCmd.PING:
                 await self.send_pong()
                 return
+            case ChatCmd.PERMISSION:
+                if data.get("retCode") != 0:
+                    _log.error("PERMISSON MISS ERROR:"
+                               "Credentials are required, or you lack sufficient account permissions.")
+                    func = self._event_hook.get(cmd_type)
+                    if func is not None:
+                        func(data)
+                return
 
         func = self._event_hook.get(cmd_type)
         if func is not None:
@@ -86,7 +99,8 @@ class ChatClient:
         await self._ws.send(data)
 
     async def send_json(self, data: dict[str, Any]) -> None:
-        await self._ws.send(json.dumps(data))
+        _log.info(json.dumps(data, ensure_ascii=False))
+        await self._ws.send(json.dumps(data, ensure_ascii=False))
 
     async def send_pong(self):
         await self._ws.send(json.dumps({
@@ -117,10 +131,13 @@ class ChatClient:
     async def send_chat(self, message: str, chat_channel_id: str):
         extra = {
             "chatType": "STREAMING",
-            "emojis": "",
+            "emojis": {},
             "osType": "PC",
             "streamingChannelId": chat_channel_id,
         }
+
+        if self._context.extra_token:
+            extra["extraToken"] = self._context.extra_token
 
         data = {
             "bdy": {

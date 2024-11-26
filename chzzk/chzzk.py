@@ -23,7 +23,9 @@ class Chzzk(ChzzkChannel, ChzzkVideo, GameUser):
         return cls(Credential(auth=auth, session=session))
 
     def has_credentials(self):
-        return self._credential is not None
+        if self._credential is not None and self._credential.auth and self._credential.session:
+            return True
+        return False
 
     @property
     def search(self) -> ChzzkSerach:

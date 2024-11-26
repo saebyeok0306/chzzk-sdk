@@ -23,7 +23,7 @@ class Subscription(DefaultModel):
 class StreamingProperty(DefaultModel):
     activated_achievement_badge_dds: list[Any] = Field(default_factory=list)
     nickname_color: Optional[ColorCode] = None
-    real_time_donation_ranking: Optional[Json[str]] = None
+    real_time_donation_ranking: Optional[Badge] = None
     subscription: Optional[Subscription] = None
 
 

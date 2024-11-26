@@ -14,6 +14,7 @@ class ChatContext:
     channel_id: Optional[str] = None
     polling: Optional[int] = None
     access_token: Optional[str] = None
+    extra_token: Optional[str] = None
     uid: Optional[str] = None
 
 
@@ -45,6 +46,7 @@ class ChatCmd(IntEnum):
     NOTICE = 94010
     PENALTY = 94015
     SEND_CHAT = 3101
+    PERMISSION = 13101
 
 
 def get_enum(cls: type[E], val: Any) -> E:

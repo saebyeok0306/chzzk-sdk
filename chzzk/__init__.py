@@ -5,13 +5,9 @@ __license__ = 'MIT'
 __copyright__ = 'Copyright 2024-present westreed'
 __version__ = '0.1.0'
 
-import logging
 from typing import NamedTuple, Literal
 from .chzzk import Chzzk
 from .chzzk_chat import ChzzkChat
-
-
-logging.basicConfig(level=logging.INFO)
 
 
 class VersionInfo(NamedTuple):

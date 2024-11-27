@@ -3,16 +3,18 @@ import logging
 from typing import Callable, Coroutine, Any, Optional
 
 from chzzk.event import EventParser
-from chzzk.model import ChatCmd
+from chzzk.model import ChatCmd, ChatMessage
 
 _log = logging.getLogger(__name__)
 
 
 class EventManager:
-    def __init__(self, loop: Optional[asyncio.AbstractEventLoop] = None):
+    def __init__(self, prefix: str, loop: Optional[asyncio.AbstractEventLoop] = None):
         self.loop: Optional[asyncio.AbstractEventLoop] = loop
+        self.prefix = prefix
         self._listeners: dict[str, list[tuple[asyncio.Future, Callable[..., bool]]]] = dict()
         self._extra_event: dict[str, list[Callable[..., Coroutine[Any, Any, Any]]]] = dict()
+        self._command_event: dict[str, list[Callable[..., Coroutine[Any, Any, Any]]]] = dict()
 
         self._ready = asyncio.Event()
 
@@ -77,10 +79,25 @@ class EventManager:
             raise TypeError("function must be a coroutine.")
 
         event_name = coro.__name__
-        if event_name not in self._listeners.keys():
+        if event_name not in self._extra_event.keys():
             self._extra_event[event_name] = list()
         self._extra_event[event_name].append(coro)
         return coro
+
+    def commands(
+            self, name: Optional[str] = None
+    ) -> Callable[[Callable[..., Coroutine[Any, Any, Any]]], Callable[..., Coroutine[Any, Any, Any]]]:
+        def decorator(coro: Callable[..., Coroutine[Any, Any, Any]]) -> Callable[..., Coroutine[Any, Any, Any]]:
+            if not asyncio.iscoroutinefunction(coro):
+                raise TypeError("function must be a coroutine.")
+
+            command_name = coro.__name__ if name is None else name
+            if command_name not in self._command_event.keys():
+                self._command_event[command_name] = list()
+            self._command_event[command_name].append(coro)
+            return coro
+
+        return decorator
 
     def dispatch(self, event: str, *args: Any, **kwargs) -> None:
         method = "on_" + event
@@ -122,6 +139,19 @@ class EventManager:
             task = self._schedule_event(coroutine_function, method, *args, **kwargs)
             task.add_done_callback(self._handle_task_result)
 
+    def run_command(self, event: str, message: ChatMessage, *args: Any, **kwargs) -> None:
+        method = event[len(self.prefix):]
+        _log.info(f"run_command:: {method}")
+
+        if method not in self._command_event.keys():
+            return
+
+        args = (message,) + args
+
+        for coroutine_function in self._command_event[method]:
+            task = self._schedule_event(coroutine_function, method, *args, **kwargs)
+            task.add_done_callback(self._handle_task_result)
+
     async def _run_event(
             self,
             coro: Callable[..., Coroutine[Any, Any, Any]],
@@ -131,10 +161,17 @@ class EventManager:
     ) -> None:
         try:
             await coro(*args, **kwargs)
+            if event_name == "on_chat":
+                message: ChatMessage = args[0]
+                cmd, *cmd_args = message.content.split()
+                if not cmd.startswith(self.prefix):
+                    return
+                self.run_command(cmd, message, *cmd_args)
         except asyncio.CancelledError:
             pass
         except Exception as e:
             try:
+                _log.error(f"error: event:{event_name} message: {e}")
                 self.dispatch("error", e, *args, **kwargs)
             except asyncio.CancelledError:
                 pass

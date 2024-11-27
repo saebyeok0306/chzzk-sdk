@@ -6,8 +6,7 @@ from typing import Optional, Any, Literal, Generic, TypeVar, Annotated
 from pydantic import Field, AliasChoices, Json, AfterValidator
 
 from chzzk.model import DefaultModel, Profile, ChatType, ChatDonation, VideoDonation, MissionDonation
-from chzzk.utils import to_kst
-
+from chzzk.utils import to_kst, as_kst
 
 T = TypeVar("T", bound="ExtraBase | DonationBase")
 
@@ -21,6 +20,7 @@ class Extra(ExtraBase):
     emojis: Optional[Any] = None
     os_type: Literal["PC", "AOS", "IOS"]
     streaming_channel_id: str
+    extraToken: Optional[str] = None
 
 
 class NoticeExtra(Extra):
@@ -70,13 +70,13 @@ class Message(DefaultModel, Generic[T]):
     type: ChatType = Field(validation_alias=AliasChoices("msgTypeCode", "messageTypeCode"))
     extras: Optional[Json[T]]
 
-    created_time: Optional[Annotated[datetime, AfterValidator(to_kst)]] = Field(
+    created_time: Optional[Annotated[datetime, AfterValidator(as_kst)]] = Field(
         validation_alias=AliasChoices("ctime", "createTime")
     )
-    updated_time: Optional[Annotated[datetime, AfterValidator(to_kst)]] = Field(
+    updated_time: Optional[Annotated[datetime, AfterValidator(as_kst)]] = Field(
         default=None, validation_alias=AliasChoices("utime", "updateTime")
     )
-    message_time: Optional[Annotated[datetime, AfterValidator(to_kst)]] = Field(
+    message_time: Optional[Annotated[datetime, AfterValidator(as_kst)]] = Field(
         validation_alias=AliasChoices("msgTime", "messageTime")
     )
 

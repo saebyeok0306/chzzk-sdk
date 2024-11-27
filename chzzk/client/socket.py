@@ -99,7 +99,6 @@ class ChatClient:
         await self._ws.send(data)
 
     async def send_json(self, data: dict[str, Any]) -> None:
-        _log.info(json.dumps(data, ensure_ascii=False))
         await self._ws.send(json.dumps(data, ensure_ascii=False))
 
     async def send_pong(self):

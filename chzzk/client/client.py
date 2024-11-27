@@ -4,7 +4,7 @@ from urllib.parse import urljoin
 import httpx
 
 from chzzk.client.credential import Credential
-from chzzk.exception import ChzzkHTTPError
+from chzzk.exception import ChzzkHTTPError, ChzzkError
 
 _http_method = Literal["GET", "POST", "DELETE"]
 _user_agent: Final[str] = (
@@ -39,7 +39,7 @@ class Client:
             url: str,
             *,
             params: Optional[Mapping[str, Any]] = None,
-            data: Optional[Mapping[str, Any]] = None,
+            data: Optional[Mapping[str, Any] | str] = None,
             **kwargs
     ) -> Any:
         response = await self._client.request(
@@ -64,12 +64,21 @@ class Client:
             url: str,
             *,
             params: Optional[Mapping[str, Any]] = None,
-            data: Optional[Mapping[str, Any]] = None,
             **kwargs
     ) -> Any:
-        return await self.request(method="GET", url=url, params=params, data=data, **kwargs)
+        return await self.request(method="GET", url=url, params=params, **kwargs)
 
     async def post(
+            self,
+            url: str,
+            *,
+            params: Optional[Mapping[str, Any]] = None,
+            data: Optional[Mapping[str, Any] | str] = None,
+            **kwargs
+    ) -> Any:
+        return await self.request(method="POST", url=url, params=params, data=data, **kwargs)
+
+    async def delete(
             self,
             url: str,
             *,
@@ -77,7 +86,7 @@ class Client:
             data: Optional[Mapping[str, Any]] = None,
             **kwargs
     ) -> Any:
-        return await self.request(method="POST", url=url, params=params, data=data, **kwargs)
+        return await self.request(method="DELETE", url=url, params=params, data=data, **kwargs)
 
 
 class ChzzkClient(Client):

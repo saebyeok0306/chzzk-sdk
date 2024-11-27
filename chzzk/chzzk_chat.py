@@ -7,15 +7,15 @@ from chzzk import Chzzk
 from chzzk.client import ChatClient
 from chzzk.event import EventManager
 from chzzk.exception import ChzzkError, ReconnectWebsocket
-from chzzk.model import ChatContext
+from chzzk.model import ChatContext, ChatMessage
 
 _log = logging.getLogger(__name__)
 
 
 class ChzzkChat(EventManager):
-    def __init__(self, chzzk: Optional[Chzzk] = None, loop: asyncio.AbstractEventLoop = None):
-        super().__init__(loop=loop)
-        self._chzzk = chzzk
+    def __init__(self, prefix: Optional[str] = "!", chzzk: Optional[Chzzk] = None, loop: asyncio.AbstractEventLoop = None):
+        super().__init__(prefix=prefix, loop=loop)
+        self._chzzk: Optional[Chzzk] = chzzk
         if self._chzzk is None:
             self._chzzk = Chzzk()
         self._chat_client: Optional[ChatClient] = None
@@ -110,11 +110,34 @@ class ChzzkChat(EventManager):
                     break
                 continue
 
-    async def send_chat(self, message: str):
+    async def send_chat(self, message: str) -> None:
         await self._chat_client.send_chat(message=message, chat_channel_id=self._context.chat_channel_id)
 
-    async def request_recent_chat(self, count: int = 50):
+    async def request_recent_chat(self, count: int = 50) -> None:
         await self._chat_client.request_recent_chat(count=count, chat_channel_id=self._context.chat_channel_id)
+
+    async def pin_message(self, message: ChatMessage) -> None:
+        await asyncio.sleep(1)
+        await self._chzzk._game_chat.set_notice_message(
+            channel_id=self._context.chat_channel_id,
+            extras=message.extras.model_dump_json(by_alias=True) if message.extras else "{}",
+            message=message.content,
+            message_time=int(message.created_time.timestamp()*1000),
+            message_user_id_hash=message.user_id,
+            streaming_channel_id=message.extras.streaming_channel_id if message.extras else None
+        )
+
+    async def unpin_message(self) -> None:
+        await self._chzzk._game_chat.delete_notice_message(channel_id=self._context.chat_channel_id)
+
+    async def blind_message(self, message: ChatMessage) -> None:
+        await self._chzzk._game_chat.blind_message(
+            channel_id=self._context.chat_channel_id,
+            message=message.content,
+            message_time=int(message.created_time.timestamp() * 1000),
+            message_user_id_hash=message.user_id,
+            streaming_channel_id=message.extras.streaming_channel_id if message.extras else None
+        )
 
     @property
     def is_broadcast_on(self):

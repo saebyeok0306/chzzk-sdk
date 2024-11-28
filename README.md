@@ -1,9 +1,7 @@
-# chzzk.py
+# chzzk-sdk
 
 네이버 라이브 스트리밍 서비스 치치직(CHZZK)의 비공식 API 라이브러리.<br/>
 공부 목적으로 만들었으며, 참조한 레포는 하단의 `References`에 명시했습니다.
-
-현재는 배포되지 않은 상태입니다.
 
 - 로그인 (쿠키 사용)
 - 검색 (채널, 영상, 생방송)
@@ -28,6 +26,10 @@
 - Python 3.11+
 
 # Installation
+
+```commandline
+pip install chzzk-sdk
+```
 
 # Example
 

@@ -1,4 +1,9 @@
 .venv
 .idea
 .env
+
+# build
 **/__pycache__
+build
+dist
+chzzk_sdk.egg-info

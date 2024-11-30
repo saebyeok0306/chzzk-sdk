@@ -39,7 +39,7 @@ class Client:
             url: str,
             *,
             params: Optional[Mapping[str, Any]] = None,
-            data: Optional[Mapping[str, Any] | str] = None,
+            data: Optional[Mapping[str, Any]] = None,
             **kwargs
     ) -> Any:
         response = await self._client.request(
@@ -73,7 +73,7 @@ class Client:
             url: str,
             *,
             params: Optional[Mapping[str, Any]] = None,
-            data: Optional[Mapping[str, Any] | str] = None,
+            data: Optional[Mapping[str, Any]] = None,
             **kwargs
     ) -> Any:
         return await self.request(method="POST", url=url, params=params, data=data, **kwargs)

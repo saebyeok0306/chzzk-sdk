@@ -8,7 +8,7 @@ from pydantic import AfterValidator, Field
 from chzzk.model import DefaultModel
 from chzzk.utils import to_kst
 
-T = TypeVar("T", bound="MessageBody")
+M = TypeVar("M", bound="PacketBody")
 
 
 class TemporaryRestrict(DefaultModel):
@@ -25,25 +25,25 @@ class Token(DefaultModel):
     extra_token: str
 
 
-class MessageBody(DefaultModel):
+class PacketBody(DefaultModel):
     pass
 
 
-class Connect(MessageBody):
+class Connect(PacketBody):
     acc_tkn: str
     auth: Literal["SEND", "READ"]
     dev_type: int
     uid: str
 
 
-class DefaultMessage(DefaultModel):
-    cid: str = None
+class DefaultPacket(DefaultModel):
+    cid: Optional[str] = None
     svcid: Literal["game"] = "game"
-    ver: str = None
+    ver: Optional[str] = None
 
 
-class Message(DefaultMessage, Generic[T]):
-    bdy: T
+class Packet(DefaultPacket, Generic[M]):
+    bdy: M
     cmd: int
     tid: int
 

@@ -22,7 +22,7 @@ class DonationBase(DefaultModel):
     pay_type: str
     pay_amount: int = 0
     donation_type: str
-    weekly_rank_list: Optional[list[DonationRank]] = Field(default_factory=list)
+    weekly_rank_list: list[DonationRank] = Field(default_factory=list)
     donation_user_weekly_rank: Optional[DonationRank] = None
 
 
@@ -47,5 +47,5 @@ class MissionDonation(DonationBase):
     mission_end_time: Optional[Annotated[datetime, AfterValidator(to_kst)]] = None
     mission_text: str
 
-    status: str | Literal["PENDING", "REJECTED", "APPROVED", "COMPLETED"] = None
+    status: str | Literal["PENDING", "REJECTED", "APPROVED", "COMPLETED"]
     success: bool = False

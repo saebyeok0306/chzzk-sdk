@@ -24,7 +24,7 @@ class EventParser:
     @staticmethod
     def register(cmd: ChatCmd):
         def decorator(func: Callable[..., Any]):
-            func.__chzzk_event__ = cmd
+            setattr(func, "__chzzk_event__", cmd)
             return func
         return decorator
 
@@ -62,7 +62,9 @@ class EventParser:
 
         for message in data:
             # bdy
-            message_raw_type: int = message.get("messageTypeCode") or message.get("msgTypeCode")
+            message_raw_type: int = int(message.get("messageTypeCode") or message.get("msgTypeCode") or 0)
+            if message_raw_type == 0:
+                continue
             message_type = get_enum(ChatType, message_raw_type)
 
             if message.get("profile") == "{}":
@@ -70,20 +72,16 @@ class EventParser:
 
             match message_type:
                 case ChatType.DONATION:
-                    validated_data = DonationMessage(**message)
-                    self.dispatch("donation", validated_data)
+                    self.dispatch("donation", DonationMessage(**message))
 
                 case ChatType.SYSTEM_MESSAGE:
-                    validated_data = SystemMessage(**message)
-                    self.dispatch("system_message", validated_data)
+                    self.dispatch("system_message", SystemMessage(**message))
 
                 case ChatType.TEXT:
-                    validated_data = ChatMessage(**message)
-                    self.dispatch("chat", validated_data)
+                    self.dispatch("chat", ChatMessage(**message))
 
                 case ChatType.SUBSCRIPTION:
-                    validated_data = SubscriptionMessage(**message)
-                    self.dispatch("subscription", validated_data)
+                    self.dispatch("subscription", SubscriptionMessage(**message))
 
     @register(ChatCmd.CHAT)
     @catch_exception

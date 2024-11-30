@@ -8,7 +8,7 @@ from chzzk.model.live import Live
 from chzzk.model.video import VideoMetadata
 
 
-T = TypeVar("T", bound="SearchRecord")
+S = TypeVar("S", bound="SearchRecord")
 
 
 class Offset(DefaultModel):
@@ -19,10 +19,10 @@ class Page(DefaultModel):
     next: Offset
 
 
-class SearchCursor(DefaultModel, Generic[T]):
+class SearchCursor(DefaultModel, Generic[S]):
     size: int
     page: Optional[Page] = None
-    data: List[T]
+    data: List[S]
 
     def __getitem__(self, item):
         return self.data[item]

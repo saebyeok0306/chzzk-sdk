@@ -10,7 +10,7 @@ _log = logging.getLogger(__name__)
 
 class EventManager:
     def __init__(self, prefix: str, loop: Optional[asyncio.AbstractEventLoop] = None):
-        self.loop: Optional[asyncio.AbstractEventLoop] = loop
+        self.loop: asyncio.AbstractEventLoop = loop or asyncio.get_event_loop()
         self.prefix = prefix
         self._listeners: dict[str, list[tuple[asyncio.Future, Callable[..., bool]]]] = dict()
         self._extra_event: dict[str, list[Callable[..., Coroutine[Any, Any, Any]]]] = dict()
@@ -18,7 +18,7 @@ class EventManager:
 
         self._ready = asyncio.Event()
 
-        handler = {ChatCmd.CONNECTED: self._ready.set}
+        handler: dict[ChatCmd | int, Callable[..., Any]] = {ChatCmd.CONNECTED: self._ready.set}
         self._parser = EventParser(dispatch=self.dispatch, handler=handler)
 
     async def close(self):

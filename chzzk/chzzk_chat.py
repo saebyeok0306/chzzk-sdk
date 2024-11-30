@@ -13,13 +13,16 @@ _log = logging.getLogger(__name__)
 
 
 class ChzzkChat(EventManager):
-    def __init__(self, prefix: Optional[str] = "!", chzzk: Optional[Chzzk] = None, loop: asyncio.AbstractEventLoop = None):
+    def __init__(
+            self,
+            prefix: str = "!",
+            chzzk: Optional[Chzzk] = None,
+            loop: Optional[asyncio.AbstractEventLoop] = None
+    ):
         super().__init__(prefix=prefix, loop=loop)
-        self._chzzk: Optional[Chzzk] = chzzk
-        if self._chzzk is None:
-            self._chzzk = Chzzk()
+        self._chzzk: Chzzk = chzzk or Chzzk()
         self._chat_client: Optional[ChatClient] = None
-        self._context: Optional[ChatContext] = ChatContext()
+        self._context: ChatContext = ChatContext()
         self.is_closed = False
         self.is_reconnected = True
         
@@ -111,32 +114,47 @@ class ChzzkChat(EventManager):
                 continue
 
     async def send_chat(self, message: str) -> None:
+        assert self._chat_client is not None, "ChatClient was not created properly."
+        assert self._context.chat_channel_id is not None, "chatChannelId is None."
         await self._chat_client.send_chat(message=message, chat_channel_id=self._context.chat_channel_id)
 
     async def request_recent_chat(self, count: int = 50) -> None:
+        assert self._chat_client is not None, "ChatClient was not created properly."
+        assert self._context.chat_channel_id is not None, "chatChannelId is None."
         await self._chat_client.request_recent_chat(count=count, chat_channel_id=self._context.chat_channel_id)
 
     async def pin_message(self, message: ChatMessage) -> None:
+        assert self._context.chat_channel_id is not None, "chatChannelId is None."
+        assert message.created_time is not None, \
+            "createdTime field of Message is empty. Please report this issue to developer."
+        assert message.extras is not None, \
+            "extras field of Message is empty. Please report this issue to developer."
         await asyncio.sleep(1)
         await self._chzzk._game_chat.set_notice_message(
             channel_id=self._context.chat_channel_id,
-            extras=message.extras.model_dump_json(by_alias=True) if message.extras else "{}",
+            extras=message.extras.model_dump_json(by_alias=True),
             message=message.content,
             message_time=int(message.created_time.timestamp()*1000),
             message_user_id_hash=message.user_id,
-            streaming_channel_id=message.extras.streaming_channel_id if message.extras else None
+            streaming_channel_id=message.extras.streaming_channel_id
         )
 
     async def unpin_message(self) -> None:
+        assert self._context.chat_channel_id is not None, "chatChannelId is None."
         await self._chzzk._game_chat.delete_notice_message(channel_id=self._context.chat_channel_id)
 
     async def blind_message(self, message: ChatMessage) -> None:
+        assert self._context.chat_channel_id is not None, "chatChannelId is None."
+        assert message.created_time is not None, \
+            "createdTime field of Message is empty. Please report this issue to developer."
+        assert message.extras is not None, \
+            "extras field of Message is empty. Please report this issue to developer."
         await self._chzzk._game_chat.blind_message(
             channel_id=self._context.chat_channel_id,
             message=message.content,
             message_time=int(message.created_time.timestamp() * 1000),
             message_user_id_hash=message.user_id,
-            streaming_channel_id=message.extras.streaming_channel_id if message.extras else None
+            streaming_channel_id=message.extras.streaming_channel_id
         )
 
     @property

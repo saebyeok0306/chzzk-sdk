@@ -36,7 +36,6 @@ class ActivityBadge(DefaultModel):
 
 
 class Profile(DefaultModel):
-    activity_badges: list[Any]
     user_id_hash: str
     user_role: Optional[UserRole] = Field(alias="userRoleCode", default=None)
     nickname: str

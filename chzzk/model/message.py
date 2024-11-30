@@ -5,7 +5,7 @@ from typing import Optional, Any, Literal, Generic, TypeVar, Annotated
 
 from pydantic import Field, AliasChoices, Json, AfterValidator
 
-from chzzk.model import DefaultModel, Profile, ChatType, ChatDonation, VideoDonation, MissionDonation
+from chzzk.model import DefaultModel, Profile, ChatType, ChatDonation, VideoDonation, MissionDonation, DonationBase
 from chzzk.utils import to_kst, as_kst
 
 T = TypeVar("T", bound="ExtraBase | DonationBase")

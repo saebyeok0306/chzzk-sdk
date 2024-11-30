@@ -9,7 +9,7 @@ from websockets import ConnectionClosedError, ConnectionClosedOK
 from websockets.asyncio.client import ClientConnection
 
 from chzzk.exception import ChzzkError, ReconnectWebsocket, ConnectionClosed, WebSocketClosure
-from chzzk.model import ChatContext, ChatCmd, DefaultMessage, get_enum, ChatType
+from chzzk.model import ChatContext, ChatCmd, DefaultPacket, get_enum, ChatType
 
 
 _log = logging.getLogger()
@@ -21,7 +21,7 @@ class ChatClient:
         self.session_id = None
         self._context = context
         self._connect = False
-        self._defaults = DefaultMessage(cid=self._context.chat_channel_id, svcid="game", ver="2")
+        self._defaults = DefaultPacket(cid=self._context.chat_channel_id, svcid="game", ver="2")
 
         self._event_hook: dict[ChatCmd, Optional[Callable[..., Any]]] = {
             key: parsers[key] if parsers.get(key) else None for key in list(ChatCmd)
@@ -41,15 +41,19 @@ class ChatClient:
 
     @property
     def is_connect(self) -> bool:
-        return self._connect and self._ws
+        if self._connect is None or self._ws is None:
+            return False
+        return True
 
     async def close(self) -> None:
         assert self.is_connect is True, "Not connected."
         self.session_id = None
-        await self._ws.close()
+        if self._ws:
+            await self._ws.close()
 
     async def connect(self) -> None:
-        server_id = sum(map(lambda x: ord(x), list(self._context.chat_channel_id))) % 9 + 1
+        assert self._context.chat_channel_id, "chatChannelId is None."
+        server_id: int = sum(map(lambda x: ord(x), list(self._context.chat_channel_id))) % 9 + 1
         try:
             self._ws = await websockets.connect(f"wss://kr-ss{server_id}.chat.naver.com/chat")
             self._connect = True
@@ -78,7 +82,8 @@ class ChatClient:
 
         match cmd_type:
             case ChatCmd.CONNECTED:
-                self.session_id = body["sid"]
+                if body is not None:
+                    self.session_id = body["sid"]
             case ChatCmd.PING:
                 await self.send_pong()
                 return
@@ -96,18 +101,22 @@ class ChatClient:
             func(body)
 
     async def send(self, data: str):
+        assert self._ws is not None, "Not connected."
         await self._ws.send(data)
 
     async def send_json(self, data: dict[str, Any]) -> None:
+        assert self._ws is not None, "Not connected."
         await self._ws.send(json.dumps(data, ensure_ascii=False))
 
     async def send_pong(self):
+        assert self._ws is not None, "Not connected."
         await self._ws.send(json.dumps({
             "cmd": ChatCmd.PONG,
             "ver": 2
         }))
 
     async def send_ping(self):
+        assert self._ws is not None, "Not connected."
         await self._ws.send(json.dumps({
             "cmd": ChatCmd.PING,
             "ver": 2

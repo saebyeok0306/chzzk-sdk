@@ -29,12 +29,6 @@ class ChzzkChat(EventManager):
         # live state
         self._live_state: Optional[Literal["OPEN", "CLOSE"]] = None
 
-    async def __aenter__(self) -> Self:
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
-        await self.close()
-
     async def close(self) -> None:
         await super().close()
 

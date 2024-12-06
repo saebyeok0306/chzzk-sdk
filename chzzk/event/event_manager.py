@@ -10,7 +10,7 @@ _log = logging.getLogger(__name__)
 
 class EventManager:
     def __init__(self, prefix: str, loop: Optional[asyncio.AbstractEventLoop] = None):
-        self.loop: asyncio.AbstractEventLoop = loop or asyncio.get_event_loop()
+        self.loop: Optional[asyncio.AbstractEventLoop] = loop
         self.prefix = prefix
         self._listeners: dict[str, list[tuple[asyncio.Future, Callable[..., bool]]]] = dict()
         self._extra_event: dict[str, list[Callable[..., Coroutine[Any, Any, Any]]]] = dict()
@@ -48,6 +48,7 @@ class EventManager:
             The number of seconds to wait before timing out and raising
             :exc:`asyncio.TimeoutError`.
         """
+        assert self.loop is not None, "Asyncio Loop is None."
         future = self.loop.create_future()
 
         if check is None:
@@ -183,6 +184,7 @@ class EventManager:
             *args: Any,
             **kwargs: Any,
     ) -> asyncio.Task:
+        assert self.loop is not None, "Asyncio Loop is None."
         wrapped = self._run_event(coro, event_name, *args, **kwargs)
         # Schedules the task
         return self.loop.create_task(wrapped, name=f"chzzk: {event_name}")

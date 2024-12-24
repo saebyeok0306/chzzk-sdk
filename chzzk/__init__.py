@@ -3,7 +3,7 @@ __title__ = 'chzzk'
 __author__ = 'westreed'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2024-present westreed'
-__version__ = '0.1.2'
+__version__ = '0.1.3'
 
 from typing import NamedTuple, Literal
 from .chzzk import Chzzk
@@ -18,6 +18,6 @@ class VersionInfo(NamedTuple):
     serial: int
 
 
-version_info: VersionInfo = VersionInfo(major=0, minor=1, micro=2, releaselevel='alpha', serial=0)
+version_info: VersionInfo = VersionInfo(major=0, minor=1, micro=3, releaselevel='beta', serial=0)
 
 del NamedTuple, Literal, VersionInfo

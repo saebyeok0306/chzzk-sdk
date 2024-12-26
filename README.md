@@ -84,6 +84,8 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
+> \+ 간단한 tts-bot 코드 : https://github.com/westreed/ChzzkBot
+
 # References
 
 - [jonghwanhyeon/python-chzzk](https://github.com/jonghwanhyeon/python-chzzk?tab=readme-ov-file)

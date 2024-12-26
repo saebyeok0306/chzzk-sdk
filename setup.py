@@ -16,12 +16,12 @@ if version is None:
 setuptools.setup(
     name="chzzk-sdk",
     version=version,
-    author="westreed",
-    author_email="westreed@naver.com",
+    author="saebyeok0306",
+    author_email="sehun0306.dev@gmail.com",
     description="An unofficial Python SDK Library for CHZZK",
     long_description_content_type="text/markdown",
     long_description=open("README.md", "r", encoding="utf-8").read(),
-    url="https://github.com/westreed/chzzk-sdk",
+    url="https://github.com/saebyeok0306/chzzk-sdk",
     install_requires=open("requirements.txt", "r", encoding="utf-8").read().splitlines(),
     packages=setuptools.find_packages(include=["chzzk", "chzzk.*"]),
     classifiers=[
